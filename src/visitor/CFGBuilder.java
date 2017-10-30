@@ -77,6 +77,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         R _ret=null;
         currentCFG = new CFG();
         currentCFG.procName = "MAIN";
+        currentCFG.numArgs = 0;
         globalCFGS.put(currentCFG.procName,currentCFG);
         n.f0.accept(this, argu);
         n.f1.accept(this, argu);
@@ -84,7 +85,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         currentCFG.resolveSuccessor();
         currentCFG.computeRanges();
         currentCFG.linearScan();
-        currentCFG.printCFG();
+        //currentCFG.printCFG();
 
 
         currentCFG = null;
@@ -92,7 +93,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         n.f4.accept(this, argu);
 
 
-
+        _ret = (R)globalCFGS;
         return _ret;
     }
 
@@ -116,6 +117,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         R _ret=null;
         currentLineNumber = 1;
         currentCFG = new CFG();
+        currentCFG.numArgs = Integer.parseInt(n.f2.f0.tokenImage);
         currentCFG.procName = n.f0.f0.tokenImage;
         globalCFGS.put(currentCFG.procName,currentCFG);
        // n.f0.accept(this, argu);
@@ -126,7 +128,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         currentCFG.resolveSuccessor();
         currentCFG.computeRanges();
         currentCFG.linearScan();
-        currentCFG.printCFG();
+       // currentCFG.printCFG();
         currentCFG = null;
         return _ret;
     }
@@ -241,7 +243,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
 
         n.f0.accept(this, argu);
 
-        stmtNode.def = (String) n.f1.accept(this, argu);
+        stmtNode.use.add((String) n.f1.accept(this, argu));
 
         n.f2.accept(this, argu);
 
@@ -385,8 +387,10 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
        ArrayList<String> arr = (ArrayList<String>) n.f1.accept(this, argu);
         n.f2.accept(this, argu);
         ArrayList<String> myArraylist = (ArrayList<String>)n.f3.accept(this, argu);
+        if(myArraylist == null) myArraylist = new ArrayList<String>();
+        currentCFG.maxCallArgs = Math.max(currentCFG.maxCallArgs,myArraylist.size());
         n.f4.accept(this, argu);
-        if(arr != null){
+        if(arr != null && myArraylist!=null){
             myArraylist.add(0,arr.get(0));
         }
         _ret = (R)myArraylist;
@@ -421,7 +425,7 @@ public class CFGBuilder<R,A> extends GJDepthFirst<R,A> {
         n.f0.accept(this, argu);
         myArrayList.add((String) n.f1.accept(this, argu));
        ArrayList<String> arr = (ArrayList<String>) n.f2.accept(this, argu);
-       if(arr!=null){
+       if(arr!=null && arr.size()>=1){
            myArrayList.add(0,arr.get(0));
        }
        _ret = (R)myArrayList;

@@ -13,6 +13,9 @@ public class CFG {
     public ArrayList<String> registers;
     public HashMap<String,String> allocatedRegisters;
     public HashMap<String,Integer> stackLocation;
+    public int stackSlotsRequired;
+    public int numArgs;
+    public int maxCallArgs;
 
     CFG(){
         procName = "";
@@ -21,10 +24,13 @@ public class CFG {
         lineInfo = new HashMap<>();
         labelInfo = new HashMap<>();
         auxlabelInfo = new HashMap<>();
-        String[] reg = {"t0","t1","t2","t3","t4","t5","t6","t7","t8", "t9 ","s0","s1","s2","s3","s4", "s5", "s6","s7"};
+        String[] reg = {"t9","t8","t7","t6","t5","t4","t3","t2","t1", "t0 ","s7","s6","s5","s4","s3", "s2", "s1","s0"};
         registers = new ArrayList<String>(Arrays.asList(reg));
         allocatedRegisters = new HashMap<>();
         stackLocation = new HashMap<>();
+        stackSlotsRequired = 0;
+        numArgs = 0;
+        maxCallArgs = 0;
     }
 
 
@@ -149,12 +155,12 @@ public class CFG {
 
         for(Range i : intervals) {
             expireOldIntervals(active,i);
-            if (active.size() == registers.size()) {
+            if (active.size() == 18) {
                 spillAtInterval(active, i );
             }
             else{
-                allocatedRegisters.put(i.varName,registers.get(registers.size()-1));
-                registers.remove(registers.size()-1);
+                allocatedRegisters.put(i.varName,registers.get(0));
+                registers.remove(0);
                 active.add(i);
                 active.sort(new SortbyEnd());
             }
@@ -164,7 +170,7 @@ public class CFG {
     public void expireOldIntervals(ArrayList<Range> active , Range i){
         for(int j=0;j<active.size();j++ ){
             if(active.get(j).end>=i.start) return ;
-            registers.add(allocatedRegisters.get(active.get(j).varName));
+            registers.add(registers.size()-1,allocatedRegisters.get(active.get(j).varName));
             active.remove(active.get(j));
         }
     }
@@ -173,6 +179,7 @@ public class CFG {
         Range spill = active.get(active.size()-1);
         if(spill.end > i.end){
             allocatedRegisters.put(i.varName,allocatedRegisters.get(spill.varName));
+            allocatedRegisters.remove(spill.varName);
             stackLocation.put(spill.varName,slocation);
             slocation++;
             active.remove(spill);
@@ -184,45 +191,6 @@ public class CFG {
     }
 
 
-    public void printCFG(){
-        System.out.println(procName);
-        for(int i : lineInfo.keySet()){
-            StmtNode stmtNode = lineInfo.get(i);
-            System.out.println("Stmt Type: " + stmtNode.stmtType);
-            System.out.println("def: "+ stmtNode.def );
-            System.out.print("use: ");
-            for(String st : stmtNode.use){
-                System.out.print(st + " ");
-            }
-            System.out.println();
-            if(stmtNode.stmtType.equals("JUMP") || stmtNode.stmtType.equals("CJUMP"))System.out.println("JUMP LABEL: " + stmtNode.targetJumpLabel);
-            System.out.println("Label: " + stmtNode.stmtlabel);
-            System.out.print("Successor: ");
-            for(StmtNode stmtNode1 : stmtNode.successor){
-                if(stmtNode1!=null)System.out.print(stmtNode1.stmtType + " ");
-                else System.out.print("END ");
-            }
-            System.out.println();
-            System.out.print("INs: ");
-            System.out.println(stmtNode.In);
-            System.out.print("Outs: ");
-            System.out.println(stmtNode.Out);
-            System.out.println();
-        }
-
-        for (String str :liveranges.keySet() ){
-            int start = liveranges.get(str).startPoint;
-            int end = liveranges.get(str).endPoint;
-            System.out.println("liverange of " + str + " " + start + " to " + end + " " );
-        }
-        for(String str : allocatedRegisters.keySet()){
-            System.out.println(str + " " + allocatedRegisters.get(str));
-        }
-        for(String str : stackLocation.keySet()){
-            System.out.println(str + " " + stackLocation.get(str));
-        }
-        System.out.println();
-    }
 }
 
 
